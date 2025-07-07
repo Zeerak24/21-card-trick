@@ -45,6 +45,37 @@ def reset_game():
     # Debugging print
     print(f"\n--- DEBUG: GAME RESET - NEW DECK. First 5 cards: {st.session_state.deck[:5]} ---")
 
+# --- MODIFIED: display_piles_with_buttons for Responsiveness ---
+def display_piles_with_buttons(piles):
+    """
+    Displays the three piles with selection buttons below them,
+    optimized for vertical stacking on smaller screens.
+    """
+    for idx, pile in enumerate(piles):
+        # Wrap each pile in a container for visual grouping and separation
+        with st.container(border=True):
+            st.header(f"Pile {idx + 1}")
+            
+            # Use columns *within* each pile to try and fit cards horizontally
+            # If 7 columns are too wide, Streamlit will wrap them automatically.
+            card_cols = st.columns(7)
+            for i, card in enumerate(pile):
+                with card_cols[i % 7]: # Distribute cards across these 7 sub-columns
+                    st.image(f"{CARD_FOLDER}/{card}", width=60) # Smaller width for individual cards
+
+            st.markdown("---") # Separator between cards and button for clarity
+            if st.button(f"Select Pile {idx + 1}", key=f"round{st.session_state.round}_pile{idx}"):
+                # gather immediately
+                st.session_state.deck = gather_piles(piles, pile_idx)
+                st.session_state.round += 1
+                # after 3 gathers, move to reveal
+                if st.session_state.round > 3:
+                    st.session_state.step = 3
+                st.rerun() # Crucial: Re-run immediately after any pile selection
+        
+        # Add some vertical space between stacked piles
+        st.markdown("<br>", unsafe_allow_html=True)
+
 
 # ─── Session State Init ──────────────────────────────────────
 # This block ensures all necessary session state variables are initialized
@@ -70,7 +101,7 @@ elif st.session_state.step == 1:
     cols = st.columns(7)
     for idx, card in enumerate(st.session_state.deck):
         with cols[idx % 7]:
-            st.image(f"{CARD_FOLDER}/{card}", width=80)
+            st.image(f"{CARD_FOLDER}/{card}", width=80) # Adjusted width for better display of 21 cards
     if st.button("I've chosen my card!"):
         st.session_state.step = 2
         st.rerun() # Ensure immediate re-run after selection confirmation
@@ -81,22 +112,9 @@ elif st.session_state.step == 2:
     st.write("Click the button under the pile that contains your card.")
 
     piles = deal_into_piles(st.session_state.deck)
-    cols = st.columns(3)
 
-    # Display each pile + its button
-    for pile_idx, pile in enumerate(piles):
-        with cols[pile_idx]:
-            st.header(f"Pile {pile_idx+1}")
-            for c in pile:
-                st.image(f"{CARD_FOLDER}/{c}", width=80)
-            if st.button(f"Select Pile {pile_idx+1}", key=f"round{st.session_state.round}_pile{pile_idx}"):
-                # gather immediately
-                st.session_state.deck = gather_piles(piles, pile_idx)
-                st.session_state.round += 1
-                # Check for end of rounds immediately after incrementing round
-                if st.session_state.round > 3:
-                    st.session_state.step = 3
-                st.rerun() # Crucial: Re-run immediately after any pile selection
+    # Use the responsive display function
+    display_piles_with_buttons(piles)
 
 # STEP 3: Reveal the 11th card
 elif st.session_state.step == 3:
