@@ -77,15 +77,18 @@ def deal_into_piles(deck):
 
 def gather_piles(piles, chosen_idx):
     """Stack piles so the chosen pile is in the middle."""
-    other_piles = [piles[i] for i in range(3) if i != chosen_idx]
-    # unchosen, chosen, other-unchosen
-    return other_piles[0] + piles[chosen_idx] + other_piles[1] # Fixed: use other_piles[0] and other_piles[1]
+    # Corrected original logic: Find the other two piles by their indices and order them
+    order = [0, 1, 2]
+    order.remove(chosen_idx)
+    # The chosen pile is always placed in the middle
+    return piles[order[0]] + piles[chosen_idx] + piles[order[1]]
+
 
 def reset_game():
     """Initialize or reset all session state for a fresh game."""
     st.session_state.step  = 0
     st.session_state.round = 1
-    # Only clear the deck, don't re-randomize here. Randomization happens in STEP 0 or 1.
+    # Only clear the deck state. Actual randomization happens in STEP 0 or 1.
     if 'deck' in st.session_state:
         del st.session_state.deck
     # Ensure any temporary state variables are cleaned up for a fresh game
@@ -174,7 +177,7 @@ elif st.session_state.step == 2:
             print(f"\n--- Round {st.session_state.round}: Deck for Dealing ---")
             print(f"Deck (first 11 cards): {st.session_state.deck[:11]}")
             current_piles_for_display = deal_into_piles(st.session_state.deck)
-            display_responsive_piles_with_buttons(current_piles_for_display)
+            display_responsive_piles_with_buttons(current_piles_for_display) # Call the responsive display function
         else:
             st.error("Internal error: Deck state invalid during rounds. Resetting game.")
             reset_game()
