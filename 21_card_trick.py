@@ -32,11 +32,6 @@ st.markdown(
     """
     <style>
       img {
-        /*
-        The original width: 10vw !important; was fine for the general layout,
-        but for the 21 initial cards, we need to ensure they don't break lines awkwardly.
-        For pile display, 10vw is likely good.
-        */
         /* Default for cards in row context (like in render_card_row_base64) */
         width: 13vw; /* Slightly larger for clarity on some phones, adjust if needed */
         height: auto;
@@ -82,19 +77,22 @@ def deal_into_piles(deck):
 
 def gather_piles(piles, chosen_idx):
     """Stack piles so the chosen pile is in the middle."""
-    order = [0, 1, 2]
-    order.remove(chosen_idx)
+    other_piles = [piles[i] for i in range(3) if i != chosen_idx]
     # unchosen, chosen, other-unchosen
-    return piles[order[0]] + piles[chosen_idx] + piles[order[1]]
+    return other_piles[0] + piles[chosen_idx] + other_piles[1] # Fixed: use other_piles[0] and other_piles[1]
 
 def reset_game():
     """Initialize or reset all session state for a fresh game."""
     st.session_state.step  = 0
     st.session_state.round = 1
-    st.session_state.deck  = random.sample(all_cards, 21)
+    # Only clear the deck, don't re-randomize here. Randomization happens in STEP 0 or 1.
+    if 'deck' in st.session_state:
+        del st.session_state.deck
     # Ensure any temporary state variables are cleaned up for a fresh game
-    if 'processing_selection' in st.session_state:
-        del st.session_state.processing_selection
+    if 'chosen_pile_index_for_gather' in st.session_state:
+        del st.session_state.chosen_pile_index_for_gather
+    # Debugging print
+    print(f"\n--- DEBUG: GAME RESET ---")
 
 
 # ─── Initialize State ──────────────────────────────────────────
@@ -102,10 +100,9 @@ def reset_game():
 if "step" not in st.session_state:
     reset_game()
 
-# This is a temporary flag to manage the double-click issue
-# We need to ensure it's initialized
-if 'processing_selection' not in st.session_state:
-    st.session_state.processing_selection = False
+# Ensure chosen_pile_index_for_gather is initialized
+if 'chosen_pile_index_for_gather' not in st.session_state:
+    st.session_state.chosen_pile_index_for_gather = None
 
 
 # ─── Helper: render a row of 7 cards as Base64 data URIs ───────
@@ -120,11 +117,10 @@ def render_card_row_base64(cards):
                 b64 = base64.b64encode(open(path, "rb").read()).decode("utf-8")
                 html += (
                     f'<img src="data:image/png;base64,{b64}" '
-                    f'style="width:13vw; height:auto; margin:0 1px; min-width: 50px;" />' # Added min-width for very small screens
+                    f'style="width:13vw; height:auto; margin:0 1px; min-width: 50px;" />'
                 )
             except Exception as e:
                 st.error(f"Error loading image {fn}: {e}")
-                # Fallback or placeholder if image fails to load
                 html += f'<div style="width:13vw; height:80px; border:1px solid red; display:flex; align-items:center; justify-content:center;">ERR</div>'
         else:
             st.warning(f"Card image not found: {path}")
@@ -141,52 +137,61 @@ if st.session_state.step == 0:
     st.write("Silently pick one card in your mind from the 21 shown below.")
     if st.button("✨ Start Trick"):
         st.session_state.step = 1
-        st.rerun() # Added rerun: Immediately go to Step 1
+        st.session_state.deck = random.sample(all_cards, 21) # Randomize deck for initial selection
+        st.rerun() # Ensures immediate transition to next step
 
-# STEP 1: Show all 21 cards in 3 rows of 7
+# STEP 1: Show all 21 cards for silent selection
 elif st.session_state.step == 1:
     st.title("Step 1: Remember Your Card")
     st.write("Don’t tap—just keep it in your mind.")
-    deck = st.session_state.deck
-    render_card_row_base64(deck[0:7])
-    render_card_row_base64(deck[7:14])
-    render_card_row_base64(deck[14:21])
+    # Display the deck for initial selection
+    deck_to_display = st.session_state.deck # This is the randomized deck from Step 0
+    render_card_row_base64(deck_to_display[0:7])
+    render_card_row_base64(deck_to_display[7:14])
+    render_card_row_base64(deck_to_display[14:21])
     if st.button("I've chosen my card!"):
         st.session_state.step = 2
-        st.rerun() # Added rerun: Immediately go to Step 2
+        random.shuffle(st.session_state.deck) # IMPORTANT: Re-shuffle the SAME 21 cards for Round 1
+        st.rerun() # Ensures immediate transition to next step
 
 # STEP 2: Three rounds of deal & gather
 elif st.session_state.step == 2:
-    st.title(f"Round {st.session_state.round} of 3")
-    st.write("Tap the button under the row (pile) that contains your card.")
+    # Process the chosen pile from the previous rerun, IF one was chosen
+    if st.session_state.chosen_pile_index_for_gather is not None and st.session_state.round <= 3:
+        # Re-create the piles from the active_game_deck *as it was displayed to the user* before they clicked.
+        # Use st.session_state.deck here as it's the single source of truth for the active game deck
+        piles_from_previous_render = deal_into_piles(st.session_state.deck)
+        st.session_state.deck = gather_piles(piles_from_previous_render, st.session_state.chosen_pile_index_for_gather)
+        st.session_state.chosen_pile_index_for_gather = None # Reset for next selection
 
-    piles = deal_into_piles(st.session_state.deck)
+    # After processing the previous selection (if any), now display for the current round
+    if st.session_state.round <= 3: # Continue with rounds 1, 2, 3
+        st.title(f"Round {st.session_state.round} of 3")
+        st.write("Tap the button under the row (pile) that contains your card.")
 
-    # Use a temporary state variable to manage the selection and avoid re-processing
-    # if st.session_state.processing_selection == False: # This check can sometimes interfere with quick reruns
-    for idx, pile in enumerate(piles):
-        st.subheader(f"Pile {idx+1}")
-        render_card_row_base64(pile) # Uses the Base64 rendering for piles
-        if st.button(f"Select Pile {idx+1}", key=f"r{st.session_state.round}_p{idx}"):
-            # When a button is clicked, immediately update state and rerun
-            # The logic to update the deck and round progression needs to happen *before* the next render
-            st.session_state.deck = gather_piles(piles, idx)
-            st.session_state.round += 1
-            if st.session_state.round > 3:
-                st.session_state.step = 3
-            st.rerun() # Added rerun: Crucial for immediate processing and redraw
+        # Ensure deck is valid before dealing
+        if st.session_state.deck:
+            print(f"\n--- Round {st.session_state.round}: Deck for Dealing ---")
+            print(f"Deck (first 11 cards): {st.session_state.deck[:11]}")
+            current_piles_for_display = deal_into_piles(st.session_state.deck)
+            display_responsive_piles_with_buttons(current_piles_for_display)
+        else:
+            st.error("Internal error: Deck state invalid during rounds. Resetting game.")
+            reset_game()
+            st.rerun()
+    else: # After Round 3 is complete, move to the reveal step
+        st.session_state.step = 3
+        st.rerun()
 
 # STEP 3: Reveal the 11th card
 elif st.session_state.step == 3:
     st.title("🎉 The Reveal!")
+    # Use st.session_state.deck for the final reveal
     chosen = st.session_state.deck[10]  # index 10 = 11th card
 
-    # Render the final chosen card using standard st.image as it's a single image
-    # The CSS for img { width: 10vw !important; } might make this too small,
-    # so we override it with a fixed width here.
     st.image(os.path.join(CARD_FOLDER, chosen), width=200, caption=chosen)
     st.balloons() # Added celebration!
 
     if st.button("🔁 Play Again"):
-        reset_game()
-        st.rerun() # Added rerun: Immediately go back to Step 0
+        reset_game() # Call the reset function
+        st.rerun() # Re-run the script to show the welcome screen with a new deck
