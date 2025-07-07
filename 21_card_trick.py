@@ -98,6 +98,30 @@ def reset_game():
     print(f"\n--- DEBUG: GAME RESET ---")
 
 
+# --- DEFINITION OF display_responsive_piles_with_buttons ---
+# This function MUST be defined before it is called in the UI Flow.
+def display_responsive_piles_with_buttons(piles):
+    """
+    Displays the three piles with selection buttons below them,
+    optimized for vertical stacking on smaller screens, using base64 rendering.
+    """
+    for idx, pile in enumerate(piles):
+        # Wrap each pile in a container for visual grouping and separation
+        # This container will stack vertically by default on narrow screens
+        with st.container(border=True):
+            st.subheader(f"Pile {idx + 1}") # Changed to subheader for consistency with render_card_row_base64
+            render_card_row_base64(pile) # Use the Base64 rendering helper
+            st.markdown("---") # Separator between cards and button for clarity
+            # IMPORTANT: The button click must store the pile index and trigger a rerun
+            if st.button(f"Select Pile {idx + 1}", key=f"select_pile_{idx}_{st.session_state.round}"):
+                st.session_state.chosen_pile_index_for_gather = idx # Store the chosen pile index
+                st.session_state.round += 1                         # Increment round
+                st.rerun() # Re-run the script immediately to process selection
+
+        # Add some vertical space between stacked piles for better readability on mobile
+        st.markdown("<br>", unsafe_allow_html=True)
+
+
 # ─── Initialize State ──────────────────────────────────────────
 # This ensures a clean state on first load or after a full app refresh
 if "step" not in st.session_state:
