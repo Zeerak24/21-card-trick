@@ -137,7 +137,7 @@ elif st.session_state.step == 2:
                 st.session_state.step = 3
             st.rerun()
 
-# STEP 3: Reveal the 11th card → here we reset to a new 21 for “Play Again”
+# STEP 3: Reveal the 11th card
 elif st.session_state.step == 3:
     st.title("🎉 The Reveal!")
     chosen = st.session_state.deck[10]  # 11th card
@@ -146,3 +146,7 @@ elif st.session_state.step == 3:
     if st.button("🔁 Play Again"):
         reset_game()
         st.rerun()
+
+# ─── AUTHOR CREDIT ─────────────────────────────────────────────
+st.markdown("---")
+st.caption("Made by Zeerak Shah")
