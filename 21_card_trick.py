@@ -91,22 +91,19 @@ def reset_game():
     """Initialize or reset all session state for a fresh game."""
     st.session_state.step  = 0
     st.session_state.round = 1
-    # st.session_state.deck = random.sample(all_cards, 21) <-- Removed this from here
-    # The deck will be set in STEP 0 when the game actually starts for the first time.
-
+    st.session_state.deck  = random.sample(all_cards, 21)
     # Ensure any temporary state variables are cleaned up for a fresh game
     if 'processing_selection' in st.session_state:
         del st.session_state.processing_selection
 
 
 # ─── Initialize State ──────────────────────────────────────────
+# This ensures a clean state on first load or after a full app refresh
 if "step" not in st.session_state:
     reset_game()
 
-if "deck" not in st.session_state: # Ensure deck is always initialized
-    st.session_state.deck = [] # Initialize as empty, will be filled in STEP 0
-
 # This is a temporary flag to manage the double-click issue
+# We need to ensure it's initialized
 if 'processing_selection' not in st.session_state:
     st.session_state.processing_selection = False
 
@@ -144,7 +141,6 @@ if st.session_state.step == 0:
     st.write("Silently pick one card in your mind from the 21 shown below.")
     if st.button("✨ Start Trick"):
         st.session_state.step = 1
-        st.session_state.deck = random.sample(all_cards, 21) # <<< ONLY HERE: Initial randomization
         st.rerun() # Added rerun: Immediately go to Step 1
 
 # STEP 1: Show all 21 cards in 3 rows of 7
@@ -157,7 +153,6 @@ elif st.session_state.step == 1:
     render_card_row_base64(deck[14:21])
     if st.button("I've chosen my card!"):
         st.session_state.step = 2
-        random.shuffle(st.session_state.deck) # <<< ONLY HERE: Re-shuffle for Round 1
         st.rerun() # Added rerun: Immediately go to Step 2
 
 # STEP 2: Three rounds of deal & gather
