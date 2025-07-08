@@ -133,7 +133,7 @@ if st.session_state.step == 0:
 elif st.session_state.step == 1:
     st.caption("Made by Zeerak Shah")
     st.title("✨ **The Connection Begins: Choose Your Destiny Card** ✨")
-    st.write("Gaze upon these ancient symbols. Without a word, let one card speak to your soul. This is your secret. This is your power.")
+    st.write("Gaze upon these ancient symbols. Without a word, let one card speak to your soul. This is your secret. This is your power. Let me guess your card in only 3 rounds")
     deck = st.session_state.deck
     render_card_row_base64(deck[0:7])
     render_card_row_base64(deck[7:14])
