@@ -46,20 +46,17 @@ st.markdown(
 st.set_page_config(page_title="21-Card Magic Trick", layout="centered")
 CARD_FOLDER = "card_images"
 
-# Gather all non-joker PNGs
 all_cards = [
     f for f in os.listdir(CARD_FOLDER)
     if f.lower().endswith(".png") and "joker" not in f.lower()
 ]
 
-# Error if folder missing or too few cards
 if not os.path.exists(CARD_FOLDER):
     st.error(f"Error: '{CARD_FOLDER}' folder not found. Add 21 PNGs here.")
     st.stop()
 if len(all_cards) < 21:
     st.error(f"Error: Need 21 card images, found {len(all_cards)}.")
     st.stop()
-
 
 # ─── TRICK LOGIC ────────────────────────────────────────────────
 def deal_into_piles(deck):
@@ -76,13 +73,10 @@ def gather_piles(piles, chosen_idx):
 def reset_game():
     st.session_state.step  = 0
     st.session_state.round = 1
-    # Pick a fresh 21 from the full 52
     st.session_state.deck  = random.sample(all_cards, 21)
 
-# Initialize on first load
 if "step" not in st.session_state:
     reset_game()
-
 
 # ─── HELPER TO RENDER A ROW OF 7 CARDS ─────────────────────────
 def render_card_row_base64(cards):
@@ -97,11 +91,11 @@ def render_card_row_base64(cards):
     html += "</div>"
     st.markdown(html, unsafe_allow_html=True)
 
-
 # ─── UI FLOW ───────────────────────────────────────────────────
 
-# STEP 0: Welcome
+# STEP 0: Welcome screen
 if st.session_state.step == 0:
+    st.caption("Made by Zeerak Shah")        # ← Your name above the title
     st.title("🃏 21-Card Magic Trick")
     st.write("Silently pick one card from the 21 shown below.")
     if st.button("✨ Start Trick"):
@@ -110,6 +104,7 @@ if st.session_state.step == 0:
 
 # STEP 1: Show all 21 cards; once chosen, shuffle that same deck
 elif st.session_state.step == 1:
+    st.caption("Made by Zeerak Shah")
     st.title("Step 1: Remember Your Card")
     st.write("Don’t tap—just keep it in your mind.")
     deck = st.session_state.deck
@@ -117,13 +112,13 @@ elif st.session_state.step == 1:
     render_card_row_base64(deck[7:14])
     render_card_row_base64(deck[14:21])
     if st.button("I've chosen my card!"):
-        # Shuffle *only* these 21 cards for round 1
         random.shuffle(st.session_state.deck)
         st.session_state.step = 2
         st.rerun()
 
-# STEP 2: Three deal-gather rounds on that same deck
+# STEP 2: Three deal‐gather rounds on that same deck
 elif st.session_state.step == 2:
+    st.caption("Made by Zeerak Shah")
     st.title(f"Round {st.session_state.round} of 3")
     st.write("Tap the button under the row containing your card.")
     piles = deal_into_piles(st.session_state.deck)
@@ -139,14 +134,11 @@ elif st.session_state.step == 2:
 
 # STEP 3: Reveal the 11th card
 elif st.session_state.step == 3:
+    st.caption("Made by Zeerak Shah")
     st.title("🎉 The Reveal!")
-    chosen = st.session_state.deck[10]  # 11th card
+    chosen = st.session_state.deck[10]
     st.image(os.path.join(CARD_FOLDER, chosen), width=200, caption=chosen)
     st.balloons()
     if st.button("🔁 Play Again"):
         reset_game()
         st.rerun()
-
-# ─── AUTHOR CREDIT ─────────────────────────────────────────────
-st.markdown("---")
-st.caption("Made by Zeerak Shah")
