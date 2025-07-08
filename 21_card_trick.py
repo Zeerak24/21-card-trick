@@ -43,7 +43,7 @@ st.markdown(
 )
 
 # ─── PAGE CONFIG & LOAD IMAGES ─────────────────────────────────
-st.set_page_config(page_title="21-Card Magic Trick", layout="centered")
+st.set_page_config(page_title="Magic Trick", layout="centered")
 CARD_FOLDER = "card_images"
 
 all_cards = [
@@ -95,8 +95,8 @@ def render_card_row_base64(cards):
 
 # STEP 0: Welcome screen
 if st.session_state.step == 0:
-    st.caption("Made by Zeerak Shah")        # ← Your name above the title
-    st.title("🃏 21-Card Magic Trick")
+    st.caption("Made by Zeerak Shah")
+    st.title("🃏 Magic Trick")
     st.write("Silently pick one card from the 21 shown below.")
     if st.button("✨ Start Trick"):
         st.session_state.step = 1
@@ -116,7 +116,7 @@ elif st.session_state.step == 1:
         st.session_state.step = 2
         st.rerun()
 
-# STEP 2: Three deal‐gather rounds on that same deck
+# STEP 2: Three deal-gather rounds on that same deck
 elif st.session_state.step == 2:
     st.caption("Made by Zeerak Shah")
     st.title(f"Round {st.session_state.round} of 3")
