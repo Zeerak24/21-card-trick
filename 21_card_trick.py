@@ -230,7 +230,7 @@ elif st.session_state.step == 3:
     st.title("🔮 **The Unveiling!** 🔮")
     st.write("The magic is complete. After our shared journey through the cards, your chosen card has risen to its destined place. Prepare for the revelation of your deepest thoughts...")
     chosen = st.session_state.deck[10] # The 11th card (index 10) is always the chosen card
-    st.image(os.path.join(CARD_FOLDER, chosen), width=200, caption="Behold! Your secret card, revealed by the ancient art of the 21-card prophecy!")
+    st.image(os.path.join(CARD_FOLDER, chosen), width=200, caption="Behold! Your secret card, revealed by the ancient art of the cards prophecy!")
     st.balloons()
     if st.button("Witness the Magic Again!"):
         reset_game()
