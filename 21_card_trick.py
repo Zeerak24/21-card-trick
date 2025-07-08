@@ -97,7 +97,7 @@ def render_card_row_base64(cards):
 if st.session_state.step == 0:
     st.caption("Made by Zeerak Shah")
     st.title("🃏 Magic Trick")
-    st.write("Silently pick one card from the 21 shown below.")
+    st.write("Silently pick one card from the cards shown below.")
     if st.button("✨ Start Trick"):
         st.session_state.step = 1
         st.rerun()
